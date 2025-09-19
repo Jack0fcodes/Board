@@ -1,49 +1,76 @@
-document.getElementById("addCardBtn").addEventListener("click", () => {
-  document.getElementById("cardOptions").classList.toggle("hidden");
+import { createTodoCard } from './cards/todo.js';
+import { createReminderCard } from './cards/reminder.js';
+import { createMoodCard } from './cards/mood.js';
+import { createHabitCard } from './cards/habit.js';
+
+const addCardBtn = document.getElementById("addCardBtn");
+const cardModal = document.getElementById("cardModal");
+const closeModal = document.getElementById("closeModal");
+const board = document.getElementById("board");
+
+// Modal toggle
+addCardBtn.addEventListener("click", () => {
+  cardModal.classList.remove("hidden");
+});
+closeModal.addEventListener("click", () => {
+  cardModal.classList.add("hidden");
 });
 
-document.querySelectorAll("#cardOptions button").forEach(btn => {
+// Add card
+document.querySelectorAll("[data-type]").forEach(btn => {
   btn.addEventListener("click", () => {
-    const cardType = btn.dataset.card;
-    addCard(cardType);
-    document.getElementById("cardOptions").classList.add("hidden");
+    const type = btn.dataset.type;
+    let card;
+
+    if (type === "todo") card = createTodoCard();
+    if (type === "reminder") card = createReminderCard();
+    if (type === "mood") card = createMoodCard();
+    if (type === "habit") card = createHabitCard();
+
+    if (card) {
+      enableDrag(card);
+      board.appendChild(card);
+    }
+
+    cardModal.classList.add("hidden");
   });
 });
 
-function addCard(type) {
-  const board = document.getElementById("board");
-  const card = document.createElement("div");
-  card.classList.add("card");
+// ---- DRAG & DROP LOGIC ----
+function enableDrag(card) {
+  card.setAttribute("draggable", true);
 
-  switch(type) {
-    case "todo":
-      card.innerHTML = `
-        <h3>To-Do</h3>
-        <ul>
-          <li><input type="checkbox"> Sample Task</li>
-        </ul>
-      `;
-      break;
-    case "reminder":
-      card.innerHTML = `
-        <h3>Reminder</h3>
-        <p>No reminders yet</p>
-      `;
-      break;
-    case "habit":
-      card.innerHTML = `
-        <h3>Habit Tracker</h3>
-        <label><input type="checkbox"> Writing</label><br>
-        <label><input type="checkbox"> Exercise</label>
-      `;
-      break;
-    case "mood":
-      card.innerHTML = `
-        <h3>Mood</h3>
-        <div>😀 🙂 😐 🙁 😢</div>
-      `;
-      break;
+  card.addEventListener("dragstart", () => {
+    card.classList.add("dragging");
+  });
+
+  card.addEventListener("dragend", () => {
+    card.classList.remove("dragging");
+  });
+}
+
+board.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  const afterElement = getDragAfterElement(board, e.clientY);
+  const dragging = document.querySelector(".dragging");
+  if (afterElement == null) {
+    board.appendChild(dragging);
+  } else {
+    board.insertBefore(dragging, afterElement);
   }
+});
 
-  board.appendChild(card);
+// Helper: find where to insert dragged card
+function getDragAfterElement(container, y) {
+  const draggableElements = [...container.querySelectorAll(".card:not(.dragging)")];
+
+  return draggableElements.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    if (offset < 0 && offset > closest.offset) {
+      return { offset: offset, element: child };
+    } else {
+      return closest;
+    }
+  }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
