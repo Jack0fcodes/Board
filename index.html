@@ -3,262 +3,164 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Dashboard</title>
+  <title>Dashboard Widget</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
     body {
       margin: 0;
-      padding: 20px;
-      background: #1c1c1e; /* Apple-like dark mode */
-      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-      color: white;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
     }
 
     .dashboard {
-      display: grid;
-      grid-template-columns: 60px 1fr 1fr;
-      grid-template-rows: 1fr 1fr;
+      display: flex;
+      background: #d9d9d9;
+      border-radius: 20px;
+      padding: 15px;
       gap: 15px;
-      height: 100vh;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
 
     /* Sidebar */
     .sidebar {
+      background: #444;
+      border-radius: 25px;
+      padding: 20px 10px;
       display: flex;
       flex-direction: column;
       align-items: center;
+      gap: 25px;
+    }
+
+    .sidebar i {
+      font-size: 20px;
+      color: white;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    .sidebar i:hover {
+      color: #00b894;
+      transform: scale(1.1);
+    }
+
+    /* Widgets grid */
+    .widgets {
+      display: grid;
+      grid-template-columns: repeat(2, 180px);
+      grid-auto-rows: 150px;
       gap: 15px;
     }
 
-    .icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      background: #2c2c2e;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-
-    .icon:hover {
-      background: #3a3a3c;
-    }
-
-    .icon svg {
-      width: 20px;
-      height: 20px;
-      stroke: white;
-    }
-
-    /* Widget cards */
     .card {
-      background: rgba(44, 44, 46, 0.85);
-      border-radius: 20px;
-      padding: 15px;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-      overflow: hidden;
+      background: white;
+      border-radius: 15px;
+      padding: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
       display: flex;
       flex-direction: column;
     }
 
-    .card h2 {
-      margin-top: 0;
-      font-size: 16px;
+    .card h3 {
+      margin: 0 0 10px;
+      font-size: 14px;
       font-weight: 600;
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      color: #333;
     }
 
-    .card h2 svg {
-      width: 18px;
-      height: 18px;
-      stroke: white;
-    }
-
-    /* To-do */
-    .todo ul {
-      padding: 0;
-      margin: 0;
-      list-style: none;
-    }
-
-    .todo li {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin: 6px 0;
-    }
-
-    /* Reminders */
-    .reminder-item {
-      display: flex;
-      justify-content: space-between;
-      background: #2c2c2e;
-      border-radius: 12px;
-      padding: 8px 12px;
-      margin-bottom: 8px;
-    }
-
-    .badge {
-      background: #0a84ff;
-      padding: 3px 8px;
-      border-radius: 12px;
+    .todo-item, .habit-item {
       font-size: 12px;
+      margin: 4px 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    /* Habits */
-    .habit-row {
+    .todo-item input, .habit-item input {
+      transform: scale(0.8);
+    }
+
+    .reminder-box {
+      background: #eee;
+      border-radius: 8px;
+      padding: 5px;
+      font-size: 12px;
+      margin: 4px 0;
       display: flex;
       justify-content: space-between;
-      margin: 6px 0;
+      align-items: center;
     }
 
-    .habit-row .progress {
-      display: flex;
-      gap: 4px;
-    }
-
-    .dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: #3a3a3c;
-    }
-
-    .dot.active {
-      background: #30d158; /* Green when completed */
-    }
-
-    /* Mood */
-    .mood-grid {
+    .mood-tracker {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
       gap: 6px;
-      margin-top: 10px;
+      margin-top: 5px;
     }
 
-    .mood-dot {
-      width: 14px;
-      height: 14px;
+    .mood-circle {
+      width: 18px;
+      height: 18px;
       border-radius: 50%;
-      background: #3a3a3c;
-    }
-
-    .mood-dot.active {
-      background: #ffd60a; /* Yellow highlight */
+      border: 1.5px solid #666;
     }
   </style>
 </head>
 <body>
   <div class="dashboard">
     <!-- Sidebar -->
-    <aside class="sidebar">
-      <button class="icon">
-        <!-- Home icon -->
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9.75L12 4l9 5.75V20a2 2 0 0 1-2 2h-5v-6H10v6H5a2 2 0 0 1-2-2V9.75z"/>
-        </svg>
-      </button>
-      <button class="icon">
-        <!-- Checklist icon -->
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m1-6H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9z"/>
-        </svg>
-      </button>
-      <button class="icon">
-        <!-- Bell icon -->
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6.002 6.002 0 0 0-4-5.659V5a2 2 0 1 0-4 0v.341C8.67 6.165 8 7.388 8 8.75V14l-1.405 1.405C6.21 15.79 6 16.367 6 17h9z"/>
-        </svg>
-      </button>
-    </aside>
+    <div class="sidebar">
+      <i class="fa-solid fa-house"></i>
+      <i class="fa-solid fa-play"></i>
+      <i class="fa-solid fa-circle"></i>
+    </div>
 
     <!-- Widgets -->
-    <section class="card todo">
-      <h2>
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m1-6H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9z"/>
-        </svg>
-        To Do
-      </h2>
-      <ul>
-        <li><input type="checkbox" checked> Finish design</li>
-        <li><input type="checkbox"> Write blog post</li>
-        <li><input type="checkbox"> Update portfolio</li>
-      </ul>
-    </section>
+    <div class="widgets">
+      <!-- To-do list -->
+      <div class="card">
+        <h3>To Do</h3>
+        <div class="todo-item"><input type="checkbox"> Test</div>
+        <div class="todo-item"><input type="checkbox"> Test</div>
+        <div class="todo-item"><input type="checkbox"> Test</div>
+      </div>
 
-    <section class="card reminder">
-      <h2>
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0 1 18 14.158V11a6.002 6.002 0 0 0-4-5.659V5a2 2 0 1 0-4 0v.341C8.67 6.165 8 7.388 8 8.75V14l-1.405 1.405C6.21 15.79 6 16.367 6 17h9z"/>
-        </svg>
-        Reminders
-      </h2>
-      <div class="reminder-item">Meeting <span class="badge">5m</span></div>
-      <div class="reminder-item">Deadline <span class="badge">2h</span></div>
-    </section>
+      <!-- Reminder -->
+      <div class="card">
+        <h3>Reminder</h3>
+        <div class="reminder-box">Test <span>5m</span></div>
+        <div class="reminder-box">Yes <span>10m</span></div>
+      </div>
 
-    <section class="card habit">
-      <h2>
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12H8m0 0l4-4m-4 4l4 4m0-8h.01"/>
-        </svg>
-        Habits
-      </h2>
-      <div class="habit-row">Writing 
-        <div class="progress">
-          <div class="dot active"></div>
-          <div class="dot active"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
+      <!-- Habit tracker -->
+      <div class="card">
+        <h3>Habit</h3>
+        <div class="habit-item"><input type="checkbox"> Writing</div>
+        <div class="habit-item"><input type="checkbox"> Exercise</div>
+        <div class="habit-item"><input type="checkbox"> Sketch</div>
+      </div>
+
+      <!-- Mood tracker -->
+      <div class="card">
+        <h3>Mood</h3>
+        <div class="mood-tracker">
+          <div class="mood-circle"></div>
+          <div class="mood-circle"></div>
+          <div class="mood-circle"></div>
+          <div class="mood-circle"></div>
+          <div class="mood-circle"></div>
+          <div class="mood-circle"></div>
+          <div class="mood-circle"></div>
+          <div class="mood-circle"></div>
+          <div class="mood-circle"></div>
+          <div class="mood-circle"></div>
         </div>
       </div>
-      <div class="habit-row">Exercise 
-        <div class="progress">
-          <div class="dot active"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-        </div>
-      </div>
-      <div class="habit-row">Sketch 
-        <div class="progress">
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-          <div class="dot"></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="card mood">
-      <h2>
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <circle cx="12" cy="12" r="9" stroke-width="2"/>
-        </svg>
-        Mood
-      </h2>
-      <div class="mood-grid">
-        <div class="mood-dot active"></div>
-        <div class="mood-dot"></div>
-        <div class="mood-dot"></div>
-        <div class="mood-dot active"></div>
-        <div class="mood-dot"></div>
-        <div class="mood-dot"></div>
-        <div class="mood-dot"></div>
-        <div class="mood-dot"></div>
-        <div class="mood-dot active"></div>
-        <div class="mood-dot"></div>
-      </div>
-    </section>
+    </div>
   </div>
 </body>
 </html>
