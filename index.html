@@ -3,22 +3,45 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Board</title>
+  <title>Widget Board</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="sidebar">
-    <button id="addCardBtn">＋</button>
-    <div id="cardOptions" class="hidden">
-      <button data-card="todo">To-Do</button>
-      <button data-card="reminder">Reminder</button>
-      <button data-card="habit">Habit</button>
-      <button data-card="mood">Mood</button>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-top">
+        <h2>Board</h2>
+      </div>
+      <div class="sidebar-bottom">
+        <button id="addCardBtn" class="add-btn">
+          <!-- Plus Icon -->
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Board -->
+    <main class="board" id="board"></main>
+  </div>
+
+  <!-- Modal for adding cards -->
+  <div class="modal hidden" id="cardModal">
+    <div class="modal-content">
+      <h3>Add a Widget</h3>
+      <button data-type="todo">Todo List</button>
+      <button data-type="reminder">Reminder</button>
+      <button data-type="mood">Mood Tracker</button>
+      <button data-type="habit">Habit Tracker</button>
+      <button id="closeModal">Cancel</button>
     </div>
   </div>
 
-  <main id="board"></main>
-
-  <script src="script.js"></script>
+  <!-- JS -->
+  <script src="script.js" type="module"></script>
 </body>
 </html>
