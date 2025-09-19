@@ -1,51 +1,49 @@
-body {
-  margin: 0;
-  font-family: system-ui, sans-serif;
-  background: #f2f2f2;
-  display: flex;
-  height: 100vh;
-}
+document.getElementById("addCardBtn").addEventListener("click", () => {
+  document.getElementById("cardOptions").classList.toggle("hidden");
+});
 
-.sidebar {
-  width: 60px;
-  background: #333;
-  color: white;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 10px;
-}
+document.querySelectorAll("#cardOptions button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const cardType = btn.dataset.card;
+    addCard(cardType);
+    document.getElementById("cardOptions").classList.add("hidden");
+  });
+});
 
-#addCardBtn {
-  font-size: 24px;
-  background: none;
-  border: none;
-  color: white;
-  cursor: pointer;
-}
+function addCard(type) {
+  const board = document.getElementById("board");
+  const card = document.createElement("div");
+  card.classList.add("card");
 
-#cardOptions {
-  margin-top: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
+  switch(type) {
+    case "todo":
+      card.innerHTML = `
+        <h3>To-Do</h3>
+        <ul>
+          <li><input type="checkbox"> Sample Task</li>
+        </ul>
+      `;
+      break;
+    case "reminder":
+      card.innerHTML = `
+        <h3>Reminder</h3>
+        <p>No reminders yet</p>
+      `;
+      break;
+    case "habit":
+      card.innerHTML = `
+        <h3>Habit Tracker</h3>
+        <label><input type="checkbox"> Writing</label><br>
+        <label><input type="checkbox"> Exercise</label>
+      `;
+      break;
+    case "mood":
+      card.innerHTML = `
+        <h3>Mood</h3>
+        <div>😀 🙂 😐 🙁 😢</div>
+      `;
+      break;
+  }
 
-#cardOptions.hidden {
-  display: none;
-}
-
-main#board {
-  flex: 1;
-  padding: 20px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-}
-
-.card {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  padding: 15px;
+  board.appendChild(card);
 }
