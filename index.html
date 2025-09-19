@@ -3,47 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Board</title>
+  <title>Board</title>
   <link rel="stylesheet" href="style.css">
-  <script defer src="script.js"></script>
 </head>
 <body>
-  <div class="dashboard">
-
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <div class="logo">📌</div>
-      <nav>
-        <button class="nav-btn" data-card="todo">📝</button>
-        <button class="nav-btn" data-card="reminder">⏰</button>
-        <button class="nav-btn" data-card="habit">✅</button>
-        <button class="nav-btn" data-card="mood">😊</button>
-      </nav>
-    </aside>
-
-    <!-- Main Content -->
-    <main class="content">
-      <section id="todo" class="card">
-        <h2>To-Do List</h2>
-        <ul id="todo-list"></ul>
-      </section>
-
-      <section id="reminder" class="card">
-        <h2>Reminders</h2>
-        <ul id="reminder-list"></ul>
-      </section>
-
-      <section id="habit" class="card">
-        <h2>Habits</h2>
-        <ul id="habit-list"></ul>
-      </section>
-
-      <section id="mood" class="card">
-        <h2>Mood Tracker</h2>
-        <div id="mood-status">🙂</div>
-      </section>
-    </main>
-
+  <div class="sidebar">
+    <button id="addCardBtn">＋</button>
+    <div id="cardOptions" class="hidden">
+      <button data-card="todo">To-Do</button>
+      <button data-card="reminder">Reminder</button>
+      <button data-card="habit">Habit</button>
+      <button data-card="mood">Mood</button>
+    </div>
   </div>
+
+  <main id="board"></main>
+
+  <script src="script.js"></script>
 </body>
 </html>
