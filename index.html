@@ -1,1 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Dashboard</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+    html { background: #000; }
+    body { margin: 0; padding: 0; min-height: 100vh; overflow-x: hidden; background: #000; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+    .safe-top { padding-top: max(1.5rem, env(safe-area-inset-top)); }
+    .safe-bottom { padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); }
+    input, select { min-width: 0; }
+    select option { background: #171717; color: #fff; }
+    @media (max-width: 640px) {
+      .dashboard-shell { padding: 1rem; }
+      .dashboard-title { font-size: 2.5rem; }
+      .card { padding: 1.1rem; }
+      .reminder-controls { flex-wrap: wrap; }
+      .reminder-controls input { flex-basis: 100%; }
+      .reminder-controls select { flex: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script>
+    const { useState, useEffect } = React;
+    const e = React.createElement;
+    const STORAGE_KEY = "jack-board-productivity-v1";
+    const DELETED_KEY = "jack-board-deleted-v1";
 
+    const emptyData = { todos: [], reminders: [], habits: [], moodEntries: [] };
+    function readStorage(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch (error) {
+        console.error("Could not read saved data:", error);
+        return fallback;
+      }
+    }
+    function normalizeData(value) {
+      return {
+        todos: Array.isArray(value.todos) ? value.todos : [],
+        reminders: Array.isArray(value.reminders) ? value.reminders : [],
+        habits: Array.isArray(value.habits) ? value.habits.map(h => ({ ...h, days: Array.isArray(h.days) ? h.days : Array(7).fill(false) })) : [],
+        moodEntries: Array.isArray(value.moodEntries) ? value.moodEntries : []
+      };
+    }
+
+    const Icons = {
+      Check: ({ size = 16 }) => e("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.5, strokeLinecap: "round", strokeLinejoin: "round" }, e("polyline", { points: "20 6 9 17 4 12" })),
+      Plus: ({ size = 20 }) => e("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round" }, e("line", { x1: 12, y1: 5, x2: 12, y2: 19 }), e("line", { x1: 5, y1: 12, x2: 19, y2: 12 })),
+      Trash2: ({ size = 18 }) => e("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }, e("polyline", { points: "3 6 5 6 21 6" }), e("path", { d: "M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" })),
+      Smile: () => e("svg", { width: 28, height: 28, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round" }, e("circle", { cx: 12, cy: 12, r: 10 }), e("path", { d: "M8 14s1.5 2 4 2 4-2 4-2" }), e("circle", { cx: 9, cy: 9, r: 0.5, fill: "currentColor" }), e("circle", { cx: 15, cy: 9, r: 0.5, fill: "currentColor" })),
+      Frown: () => e("svg", { width: 28, height: 28, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round" }, e("circle", { cx: 12, cy: 12, r: 10 }), e("path", { d: "M16 16s-1.5-2-4-2-4 2-4 2" }), e("circle", { cx: 9, cy: 9, r: 0.5, fill: "currentColor" }), e("circle", { cx: 15, cy: 9, r: 0.5, fill: "currentColor" })),
+      Meh: () => e("svg", { width: 28, height: 28, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round" }, e("circle", { cx: 12, cy: 12, r: 10 }), e("line", { x1: 8, y1: 15, x2: 16, y2: 15 }), e("circle", { cx: 9, cy: 9, r: 0.5, fill: "currentColor" }), e("circle", { cx: 15, cy: 9, r: 0.5, fill: "currentColor" })),
+      Angry: () => e("svg", { width: 28, height: 28, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round" }, e("circle", { cx: 12, cy: 12, r: 10 }), e("path", { d: "M16 16s-1.5-2-4-2-4 2-4 2" }), e("path", { d: "M7.5 8 10 9" }), e("path", { d: "m14 9 2.5-1" }), e("circle", { cx: 9, cy: 10, r: 0.5, fill: "currentColor" }), e("circle", { cx: 15, cy: 10, r: 0.5, fill: "currentColor" })),
+      Heart: () => e("svg", { width: 28, height: 28, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2 }, e("path", { d: "M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" }))
+    };
+
+    const moodOptions = [
+      { value: "happy", icon: Icons.Smile, bgGradient: "from-green-500/20 to-emerald-500/20", label: "Happy" },
+      { value: "sad", icon: Icons.Frown, bgGradient: "from-blue-500/20 to-cyan-500/20", label: "Sad" },
+      { value: "angry", icon: Icons.Angry, bgGradient: "from-red-500/20 to-orange-500/20", label: "Angry" },
+      { value: "neutral", icon: Icons.Meh, bgGradient: "from-gray-500/20 to-slate-500/20", label: "Neutral" },
+      { value: "excited", icon: Icons.Heart, bgGradient: "from-pink-500/20 to-rose-500/20", label: "Excited" }
+    ];
+    const priorityStyles = {
+      high: "from-red-500/20 to-pink-500/20 border-red-500/30",
+      medium: "from-yellow-500/20 to-orange-500/20 border-yellow-500/30",
+      low: "from-green-500/20 to-emerald-500/20 border-green-500/30"
+    };
+    const priorityBadge = {
+      high: "from-red-500 to-pink-500",
+      medium: "from-yellow-500 to-orange-500",
+      low: "from-green-500 to-emerald-500"
+    };
+    const cardClass = "card backdrop-blur-2xl rounded-3xl p-6 transition-all duration-300 border bg-white/5 border-white/10 shadow-2xl";
+    const inputClass = "flex-1 w-full px-4 py-3 rounded-2xl backdrop-blur-xl transition-all outline-none bg-white/5 border border-white/10 text-white placeholder-gray-500 focus:bg-white/10 focus:border-white/20";
+    const addButton = "px-5 py-3 bg-gradient-to-r from-purple-500 to-blue-500 text-white rounded-2xl hover:from-purple-600 hover:to-blue-600 transition-all shadow-lg flex items-center justify-center";
+
+    function Dashboard() {
+      const [data, setData] = useState(() => normalizeData(readStorage(STORAGE_KEY, emptyData)));
+      const [deleted, setDeleted] = useState(() => {
+        const saved = readStorage(DELETED_KEY, { items: [] });
+        return { items: Array.isArray(saved.items) ? saved.items : [] };
+      });
+      const [newTodo, setNewTodo] = useState("");
+      const [newReminder, setNewReminder] = useState("");
+      const [newReminderPriority, setNewReminderPriority] = useState("medium");
+      const [newHabit, setNewHabit] = useState("");
+      const [showDeleted, setShowDeleted] = useState(false);
+      const [storageError, setStorageError] = useState(false);
+
+      const { todos, reminders, habits, moodEntries } = data;
+      useEffect(() => {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+          setStorageError(false);
+        } catch (error) {
+          console.error("Could not save dashboard:", error);
+          setStorageError(true);
+        }
+      }, [data]);
+      useEffect(() => {
+        try { localStorage.setItem(DELETED_KEY, JSON.stringify(deleted)); }
+        catch (error) { console.error("Could not save deleted items:", error); }
+      }, [deleted]);
+
+      const update = (key, value) => setData(current => ({ ...current, [key]: value }));
+      const addTodo = () => {
+        if (!newTodo.trim()) return;
+        update("todos", [...todos, { text: newTodo.trim(), done: false, id: Date.now() }]);
+        setNewTodo("");
+      };
+      const toggleTodo = id => update("todos", todos.map(t => t.id === id ? { ...t, done: !t.done } : t));
+      const removeItem = (type, item, key) => {
+        setDeleted(current => ({ items: [...current.items, { type, item, deletedAt: new Date().toISOString() }] }));
+        update(key, data[key].filter(entry => entry.id !== item.id));
+      };
+      const addReminder = () => {
+        if (!newReminder.trim()) return;
+        update("reminders", [...reminders, { text: newReminder.trim(), priority: newReminderPriority, id: Date.now() }]);
+        setNewReminder("");
+      };
+      const addHabit = () => {
+        if (!newHabit.trim()) return;
+        update("habits", [...habits, { text: newHabit.trim(), days: Array(7).fill(false), id: Date.now() }]);
+        setNewHabit("");
+      };
+      const toggleHabitDay = (habitId, dayIndex) => update("habits", habits.map(h => {
+        if (h.id !== habitId) return h;
+        const days = [...h.days];
+        days[dayIndex] = !days[dayIndex];
+        return { ...h, days };
+      }));
+      const todayKey = new Date().toLocaleDateString();
+      const addMood = moodValue => {
+        const index = moodEntries.findIndex(m => m.date === todayKey);
+        const entry = { date: todayKey, mood: moodValue, id: index >= 0 ? moodEntries[index].id : Date.now() };
+        if (index >= 0) {
+          const next = [...moodEntries];
+          next[index] = entry;
+          update("moodEntries", next);
+        } else update("moodEntries", [...moodEntries, entry]);
+      };
+      const todayMood = moodEntries.find(m => m.date === todayKey)?.mood;
+      const exportData = () => {
+        const blob = new Blob([JSON.stringify({ ...data, deleted }, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "board-backup.json";
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+      const importData = event => {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const parsed = JSON.parse(reader.result);
+            setData(normalizeData(parsed));
+            if (parsed.deleted && Array.isArray(parsed.deleted.items)) setDeleted(parsed.deleted);
+          } catch (error) { alert("This backup file is not valid."); }
+          event.target.value = "";
+        };
+        reader.readAsText(file);
+      };
+
+      const sectionTitle = (title, extra) => e("div", { className: "flex items-center justify-between mb-5" },
+        e("h2", { className: "text-2xl font-semibold text-white" }, title), extra || null
+      );
+
+      return e("div", { className: "min-h-screen relative overflow-hidden transition-all duration-500 bg-black safe-bottom" },
+        e("div", { className: "absolute inset-0 overflow-hidden pointer-events-none" },
+          e("div", { className: "absolute top-0 right-0 w-96 h-96 rounded-full blur-3xl opacity-30 bg-purple-500", style: { transform: "translate(50%, -50%)" } }),
+          e("div", { className: "absolute bottom-0 left-0 w-96 h-96 rounded-full blur-3xl opacity-30 bg-blue-500", style: { transform: "translate(-50%, 50%)" } })
+        ),
+        e("div", { className: "relative z-10 max-w-7xl mx-auto p-6 dashboard-shell safe-top" },
+          e("div", { className: "mb-8 flex flex-wrap items-end justify-between gap-4" },
+            e("div", null,
+              e("h1", { className: "dashboard-title text-5xl font-bold tracking-tight mb-2 text-white" }, "Dashboard"),
+              e("p", { className: "text-gray-400" }, new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" }))
+            ),
+            e("div", { className: "flex items-center gap-2" },
+              e("button", { onClick: exportData, className: "px-3 py-2 rounded-xl text-sm text-gray-300 bg-white/5 border border-white/10 hover:bg-white/10 transition" }, "Export"),
+              e("label", { className: "px-3 py-2 rounded-xl text-sm text-gray-300 bg-white/5 border border-white/10 hover:bg-white/10 transition cursor-pointer" }, "Import", e("input", { type: "file", accept: "application/json,.json", onChange: importData, className: "hidden" })),
+              e("button", { onClick: () => setShowDeleted(v => !v), className: "px-3 py-2 rounded-xl text-sm text-gray-300 bg-white/5 border border-white/10 hover:bg-white/10 transition" }, "Deleted (" + deleted.items.length + ")")
+            )
+          ),
+          storageError ? e("p", { className: "text-xs text-red-400 mb-4" }, "Storage is full or unavailable. Export a backup before closing this page.") : null,
+          e("div", { className: "grid grid-cols-1 lg:grid-cols-2 gap-6" },
+
+            e("div", { className: cardClass },
+              sectionTitle("To Do"),
+              e("div", { className: "flex gap-3 mb-5" },
+                e("input", { type: "text", value: newTodo, onChange: ev => setNewTodo(ev.target.value), onKeyDown: ev => ev.key === "Enter" && addTodo(), placeholder: "Add new task...", className: inputClass }),
+                e("button", { onClick: addTodo, className: addButton }, e(Icons.Plus))
+              ),
+              e("div", { className: "space-y-2 max-h-80 overflow-y-auto pr-2 scrollbar-thin" },
+                todos.length ? todos.map(todo => e("div", { key: todo.id, className: "flex items-center gap-3 p-4 rounded-2xl backdrop-blur-xl transition-all bg-white/5 hover:bg-white/10" },
+                  e("button", { onClick: () => toggleTodo(todo.id), "aria-label": todo.done ? "Mark task incomplete" : "Complete task", className: "w-7 h-7 shrink-0 rounded-full flex items-center justify-center transition-all " + (todo.done ? "bg-gradient-to-r from-purple-500 to-blue-500 shadow-lg" : "bg-white/10 border-2 border-white/20") }, todo.done ? e(Icons.Check) : null),
+                  e("span", { className: "flex-1 break-words " + (todo.done ? "line-through text-gray-500" : "text-white") }, todo.text),
+                  e("button", { onClick: () => removeItem("todo", todo, "todos"), "aria-label": "Delete task", className: "shrink-0 text-gray-500 hover:text-red-400 transition" }, e(Icons.Trash2))
+                )) : e("p", { className: "text-sm text-gray-500 py-3 text-center" }, "No tasks yet")
+              )
+            ),
+
+            e("div", { className: cardClass },
+              sectionTitle("Reminders"),
+              e("div", { className: "flex gap-3 mb-5 reminder-controls" },
+                e("input", { type: "text", value: newReminder, onChange: ev => setNewReminder(ev.target.value), onKeyDown: ev => ev.key === "Enter" && addReminder(), placeholder: "Add reminder...", className: inputClass }),
+                e("select", { value: newReminderPriority, onChange: ev => setNewReminderPriority(ev.target.value), className: "px-3 py-3 rounded-2xl backdrop-blur-xl outline-none bg-white/5 border border-white/10 text-white" },
+                  e("option", { value: "high" }, "High"), e("option", { value: "medium" }, "Medium"), e("option", { value: "low" }, "Low")
+                ),
+                e("button", { onClick: addReminder, className: "px-5 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-2xl hover:from-blue-600 hover:to-cyan-600 transition-all shadow-lg flex items-center justify-center" }, e(Icons.Plus))
+              ),
+              e("div", { className: "space-y-2 max-h-80 overflow-y-auto pr-2 scrollbar-thin" },
+                reminders.length ? reminders.map(reminder => e("div", { key: reminder.id, className: "flex items-center gap-3 p-4 rounded-2xl backdrop-blur-xl border transition-all bg-gradient-to-r " + (priorityStyles[reminder.priority] || priorityStyles.medium) },
+                  e("div", { className: "w-10 h-10 shrink-0 rounded-xl flex items-center justify-center font-bold text-white shadow-lg bg-gradient-to-r " + (priorityBadge[reminder.priority] || priorityBadge.medium) }, (reminder.priority || "medium")[0].toUpperCase()),
+                  e("span", { className: "flex-1 break-words text-white" }, reminder.text),
+                  e("button", { onClick: () => removeItem("reminder", reminder, "reminders"), "aria-label": "Delete reminder", className: "shrink-0 text-gray-500 hover:text-red-400 transition" }, e(Icons.Trash2))
+                )) : e("p", { className: "text-sm text-gray-500 py-3 text-center" }, "No reminders yet")
+              )
+            ),
+
+            e("div", { className: cardClass },
+              sectionTitle("Habits"),
+              e("div", { className: "flex gap-3 mb-5" },
+                e("input", { type: "text", value: newHabit, onChange: ev => setNewHabit(ev.target.value), onKeyDown: ev => ev.key === "Enter" && addHabit(), placeholder: "Add habit...", className: inputClass }),
+                e("button", { onClick: addHabit, className: "px-5 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-2xl hover:from-green-600 hover:to-emerald-600 transition-all shadow-lg flex items-center justify-center" }, e(Icons.Plus))
+              ),
+              e("div", { className: "space-y-3 max-h-80 overflow-y-auto pr-2 scrollbar-thin" },
+                habits.length ? habits.map(habit => e("div", { key: habit.id, className: "p-4 rounded-2xl backdrop-blur-xl transition-all bg-white/5" },
+                  e("div", { className: "flex items-center justify-between mb-3 gap-3" },
+                    e("span", { className: "font-medium text-white break-words" }, habit.text),
+                    e("button", { onClick: () => removeItem("habit", habit, "habits"), "aria-label": "Delete habit", className: "shrink-0 text-gray-500 hover:text-red-400 transition" }, e(Icons.Trash2))
+                  ),
+                  e("div", { className: "grid grid-cols-7 gap-2" },
+                    ["M", "T", "W", "T", "F", "S", "S"].map((day, i) => e("button", { key: i, onClick: () => toggleHabitDay(habit.id, i), "aria-label": "Toggle " + ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"][i], className: "h-11 rounded-xl font-semibold text-sm transition-all " + (habit.days[i] ? "bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg scale-105" : "bg-white/5 text-gray-400 hover:bg-white/10 border border-white/10") }, day))
+                  )
+                )) : e("p", { className: "text-sm text-gray-500 py-3 text-center" }, "No habits yet")
+              )
+            ),
+
+            e("div", { className: cardClass },
+              e("h2", { className: "text-2xl font-semibold mb-2 text-white" }, "Mood"),
+              e("p", { className: "text-sm mb-5 text-gray-400" }, "How are you feeling today?"),
+              e("div", { className: "grid grid-cols-5 gap-2 sm:gap-3 mb-6" },
+                moodOptions.map(({ value, icon, bgGradient, label }) => e("button", { key: value, onClick: () => addMood(value), className: "flex flex-col items-center gap-2 p-2 sm:p-4 rounded-2xl backdrop-blur-xl transition-all " + (todayMood === value ? "bg-gradient-to-br " + bgGradient + " border-2 border-white/30 scale-105 shadow-lg" : "bg-white/5 hover:bg-white/10 border border-white/10") },
+                  e(icon), e("span", { className: "text-[10px] sm:text-xs font-medium text-white" }, label)
+                ))
+              ),
+              e("div", { className: "p-5 rounded-2xl backdrop-blur-xl bg-white/5" },
+                e("h3", { className: "text-sm font-semibold mb-3 text-white" }, "Recent Moods"),
+                e("div", { className: "space-y-3 max-h-44 overflow-y-auto pr-2 scrollbar-thin" },
+                  moodEntries.length ? moodEntries.slice().reverse().slice(0, 7).map(entry => {
+                    const option = moodOptions.find(m => m.value === entry.mood);
+                    return e("div", { key: entry.id, className: "flex items-center gap-3" },
+                      option ? e("div", { className: "w-9 h-9 rounded-xl flex items-center justify-center backdrop-blur-xl bg-gradient-to-br " + option.bgGradient }, e(option.icon)) : null,
+                      e("div", { className: "flex-1" }, e("div", { className: "text-sm font-medium text-white" }, option ? option.label : entry.mood), e("div", { className: "text-xs text-gray-500" }, entry.date))
+                    );
+                  }) : e("p", { className: "text-sm text-gray-500" }, "Your mood history will appear here")
+                )
+              )
+            )
+          ),
+          showDeleted ? e("div", { className: cardClass + " mt-6" },
+            e("div", { className: "flex items-center justify-between mb-5" },
+              e("h2", { className: "text-2xl font-semibold text-white" }, "Deleted Items"),
+              e("button", { onClick: () => setShowDeleted(false), className: "text-sm text-gray-400 hover:text-white" }, "Close")
+            ),
+            deleted.items.length ? e("div", { className: "space-y-2 max-h-72 overflow-y-auto scrollbar-thin" },
+              deleted.items.slice().reverse().map((entry, index) => e("div", { key: entry.item.id + "-" + entry.deletedAt + "-" + index, className: "p-3 rounded-xl bg-white/5 flex items-center justify-between gap-3" },
+                e("div", { className: "min-w-0" }, e("p", { className: "text-sm text-white break-words" }, entry.item.text), e("p", { className: "text-xs text-gray-500 capitalize" }, entry.type + " · " + new Date(entry.deletedAt).toLocaleString())),
+                e("button", { onClick: () => {
+                  const key = entry.type === "todo" ? "todos" : entry.type === "reminder" ? "reminders" : "habits";
+                  update(key, [...data[key], entry.item]);
+                  setDeleted(current => ({ items: current.items.filter((_, i) => i !== deleted.items.length - 1 - index) }));
+                }, className: "text-xs text-blue-300 hover:text-blue-200 shrink-0" }, "Restore")
+              ))
+            ) : e("p", { className: "text-sm text-gray-500" }, "No deleted items")
+          ) : null,
+          e("div", { className: "text-center text-xs text-gray-600 mt-8" }, "Your dashboard saves automatically on this device.")
+        )
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(e(Dashboard));
+  </script>
+</body>
+</html>
