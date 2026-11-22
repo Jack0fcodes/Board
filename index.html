@@ -276,10 +276,9 @@
 
             e("div", { className: cardClass },
               e("h2", { className: "text-2xl font-semibold mb-2 text-white" }, "Mood"),
-              e("p", { className: "text-sm mb-5 text-gray-400" }, "How are you feeling today?"),
               e("div", { className: "grid grid-cols-5 gap-2 sm:gap-3 mb-6" },
-                moodOptions.map(({ value, icon, bgGradient, label }) => e("button", { key: value, onClick: () => addMood(value), className: "flex flex-col items-center gap-2 p-2 sm:p-4 rounded-2xl backdrop-blur-xl transition-all " + (todayMood === value ? "bg-gradient-to-br " + bgGradient + " border-2 border-white/30 scale-105 shadow-lg" : "bg-white/5 hover:bg-white/10 border border-white/10") },
-                  e(icon), e("span", { className: "text-[10px] sm:text-xs font-medium text-white" }, label)
+                moodOptions.map(({ value, icon, bgGradient }) => e("button", { key: value, onClick: () => addMood(value), "aria-label": value + " mood", title: value.charAt(0).toUpperCase() + value.slice(1), className: "flex items-center justify-center p-2 sm:p-4 rounded-2xl backdrop-blur-xl transition-all " + (todayMood === value ? "bg-gradient-to-br " + bgGradient + " border-2 border-white/30 scale-105 shadow-lg" : "bg-white/5 hover:bg-white/10 border border-white/10") },
+                  e(icon)
                 ))
               ),
               e("div", { className: "p-5 rounded-2xl backdrop-blur-xl bg-white/5" },
