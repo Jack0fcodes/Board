@@ -28,6 +28,17 @@
     .safe-bottom { padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); }
     input, select { min-width: 0; }
     select option { background: #171717; color: #fff; }
+    /* Center the dashboard in the taller iPad/tablet app viewport without
+       forcing scrolling layouts on smaller screens. */
+    @media (min-width: 900px) and (min-height: 700px) {
+      .dashboard-shell {
+        min-height: 100vh;
+        min-height: 100svh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+    }
     @media (max-width: 640px) {
       .dashboard-shell { padding: 1rem; }
       .dashboard-title { font-size: 2.5rem; }
