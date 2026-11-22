@@ -1,9 +1,9 @@
-const CACHE_NAME = "board-pwa-v1";
+const CACHE_NAME = "board-pwa-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
   "./manifest.webmanifest",
-  "./icon.svg"
+  "./icon.png"
 ];
 
 self.addEventListener("install", event => {
